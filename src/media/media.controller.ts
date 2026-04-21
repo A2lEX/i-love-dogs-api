@@ -28,9 +28,8 @@ export class MediaController {
   constructor(private readonly mediaService: MediaService) {}
 
   @Post('presigned-url')
-  @Roles('curator', 'admin')
   @ApiOperation({
-    summary: 'Get presigned URL for file upload (curator & admin only)',
+    summary: 'Get presigned URL for file upload',
   })
   async getPresignedUrl(@Body() dto: PresignedUrlDto) {
     return this.mediaService.generatePresignedUrl(
