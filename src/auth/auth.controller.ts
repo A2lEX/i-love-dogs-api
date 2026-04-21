@@ -7,6 +7,7 @@ import {
   Post,
   Req,
   UseGuards,
+  Logger,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -26,6 +27,7 @@ import {
 @Controller('auth')
 @UseGuards(JwtAuthGuard)
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
   constructor(private readonly authService: AuthService) {}
 
   @Public()
@@ -63,7 +65,9 @@ export class AuthController {
   @Get('me')
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user profile' })
-  async getMe(@CurrentUser() user: any) {
+  async getMe(@Req() req: any, @CurrentUser() user: any) {
+    this.logger.log(`GetMe request. Auth header: ${req.headers.authorization}`);
+    this.logger.log(`User from decorator: ${user ? JSON.stringify(user) : 'UNDEFINED'}`);
     return this.authService.getMe(user);
   }
 }
