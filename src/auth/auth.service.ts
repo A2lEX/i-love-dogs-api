@@ -99,12 +99,15 @@ export class AuthService {
   }
 
   private sanitizeUser(user: any) {
+    if (!user) return null;
     const { password_hash, ...safeUser } = user;
     return safeUser;
   }
 
   async getMe(user: any) {
-    // user object is already provided by JwtStrategy/Guard
+    if (!user) {
+      throw new UnauthorizedException('User not authenticated');
+    }
     return this.sanitizeUser(user);
   }
 }
