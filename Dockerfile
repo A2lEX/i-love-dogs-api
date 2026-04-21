@@ -4,6 +4,7 @@ FROM node:22-alpine AS development
 WORKDIR /usr/src/app
 
 COPY package*.json ./
+COPY prisma ./prisma
 # Устанавливаем все зависимости, включая devDependencies для hot-reload
 RUN npm install
 
@@ -17,6 +18,7 @@ CMD [ "npm", "run", "start:dev" ]
 FROM node:22-alpine AS builder
 WORKDIR /usr/src/app
 COPY package*.json ./
+COPY prisma ./prisma
 RUN npm ci
 COPY . .
 RUN npx prisma generate
