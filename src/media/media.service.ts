@@ -45,7 +45,8 @@ export class MediaService {
       expiresIn: 300,
     }); // 5 minutes
 
-    const fileUrl = `${this.configService.get<string>('s3.endpoint')}/${this.bucket}/${key}`;
+    const publicEndpoint = this.configService.get<string>('s3.publicUrl') || `${this.configService.get<string>('s3.endpoint')}/${this.bucket}`;
+    const fileUrl = `${publicEndpoint}/${key}`;
 
     return {
       upload_url: uploadUrl,

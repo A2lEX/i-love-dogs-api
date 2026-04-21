@@ -6,4 +6,5 @@ export default registerAs('s3', () => ({
   accessKey: process.env.S3_ACCESS_KEY || 'minioadmin',
   secretKey: process.env.S3_SECRET_KEY || 'minioadmin',
   region: process.env.S3_REGION || 'ru-central1',
+  publicUrl: process.env.S3_PUBLIC_URL,
 }));
