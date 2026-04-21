@@ -36,6 +36,7 @@ export class DogsService {
         description: data.description,
         city: data.city,
         cover_photo_url: data.cover_photo_url || null,
+        photos: data.photos || [],
         status: 'active',
       },
     });
@@ -66,6 +67,7 @@ export class DogsService {
         description: data.description,
         city: data.city,
         cover_photo_url: data.cover_photo_url,
+        photos: data.photos,
         status: data.status,
       },
     });

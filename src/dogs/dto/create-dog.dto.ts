@@ -5,6 +5,7 @@ import {
   IsInt,
   IsIn,
   IsUrl,
+  IsArray,
   MaxLength,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -46,4 +47,13 @@ export class CreateDogDto {
   @IsOptional()
   @IsUrl()
   cover_photo_url?: string;
+
+  @ApiPropertyOptional({
+    example: ['https://minio.local/dogcare/rex-1.jpg'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  photos?: string[];
 }

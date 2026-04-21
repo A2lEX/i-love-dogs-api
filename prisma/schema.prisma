@@ -36,6 +36,8 @@ enum DogGender {
 
 enum DogStatus {
   active
+  on_hold
+  medical
   adopted
   deceased
   archived
@@ -153,6 +155,7 @@ model Dog {
   status          DogStatus
   city            String    @db.VarChar(100)
   cover_photo_url String?
+  photos          String[]  @default([])
   created_at      DateTime  @default(now())
   updated_at      DateTime  @updatedAt
 
