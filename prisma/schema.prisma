@@ -1,0 +1,282 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Enums
+
+enum UserRole {
+  donor
+  curator
+  admin
+}
+
+enum UserStatus {
+  active
+  suspended
+}
+
+enum VerifyStatus {
+  pending
+  verified
+  rejected
+}
+
+enum DogGender {
+  male
+  female
+  unknown
+}
+
+enum DogStatus {
+  active
+  adopted
+  deceased
+  archived
+}
+
+enum GoalCategory {
+  medical
+  sterilization
+  food
+  custom
+}
+
+enum GoalStatus {
+  active
+  completed
+  cancelled
+}
+
+enum PatronageType {
+  exclusive
+  regular
+}
+
+enum PatronageStatus {
+  active
+  paused
+  cancelled
+}
+
+enum WalkStatus {
+  pending
+  confirmed
+  started
+  completed
+  cancelled
+}
+
+enum PaymentProvider {
+  yookassa
+  stripe
+}
+
+enum PaymentStatus {
+  pending
+  succeeded
+  failed
+  refunded
+}
+
+enum AnonDonationStatus {
+  pending
+  succeeded
+  failed
+}
+
+enum ReportType {
+  general
+  medical
+  walk
+  adoption
+}
+
+// Models
+
+model User {
+  id            String   @id @default(uuid()) @db.Uuid
+  name          String   @db.VarChar(100)
+  email         String   @unique @db.VarChar(255)
+  phone         String?  @db.VarChar(20)
+  password_hash String
+  role          UserRole
+  status        UserStatus
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  // Relations
+  curator_profile CuratorProfile?
+  created_goals   Goal[]          @relation("GoalCreator")
+  patronages      Patronage[]
+  walks           Walk[]          @relation("WalkWalker")
+  payments        Payment[]
+  reports         Report[]
+
+  @@map("users")
+}
+
+model CuratorProfile {
+  id             String       @id @default(uuid()) @db.Uuid
+  user_id        String       @unique @db.Uuid
+  shelter_name   String       @db.VarChar(200)
+  address        String?      @db.Text
+  city           String       @db.VarChar(100)
+  description    String?      @db.Text
+  verify_status  VerifyStatus
+  verified_at    DateTime?
+  verified_by    String?      @db.Uuid
+  rejection_note String?      @db.Text
+  created_at     DateTime     @default(now())
+
+  // Relations
+  user User  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  dogs Dog[]
+
+  @@map("curator_profiles")
+}
+
+model Dog {
+  id              String    @id @default(uuid()) @db.Uuid
+  curator_id      String    @db.Uuid
+  name            String    @db.VarChar(100)
+  breed           String?   @db.VarChar(100)
+  age_months      Int?
+  gender          DogGender
+  description     String    @db.Text
+  status          DogStatus
+  city            String    @db.VarChar(100)
+  cover_photo_url String?
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  // Relations
+  curator    CuratorProfile @relation(fields: [curator_id], references: [id], onDelete: Restrict)
+  goals      Goal[]
+  patronages Patronage[]
+  walks      Walk[]
+  reports    Report[]
+
+  @@map("dogs")
+}
+
+model Goal {
+  id               String       @id @default(uuid()) @db.Uuid
+  dog_id           String       @db.Uuid
+  created_by       String       @db.Uuid
+  category         GoalCategory
+  title            String       @db.VarChar(200)
+  description      String?      @db.Text
+  amount_target    Int
+  amount_collected Int          @default(0)
+  deadline         DateTime?
+  is_recurring     Boolean      @default(false)
+  status           GoalStatus
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+
+  // Relations
+  dog            Dog            @relation(fields: [dog_id], references: [id], onDelete: Cascade)
+  creator        User           @relation("GoalCreator", fields: [created_by], references: [id], onDelete: Restrict)
+  payments       Payment[]
+  anon_donations AnonDonation[]
+
+  @@map("goals")
+}
+
+model Patronage {
+  id         String          @id @default(uuid()) @db.Uuid
+  dog_id     String          @db.Uuid
+  user_id    String          @db.Uuid
+  type       PatronageType
+  status     PatronageStatus
+  started_at DateTime        @default(now())
+  ended_at   DateTime?
+  created_at DateTime        @default(now())
+
+  // Relations
+  dog      Dog       @relation(fields: [dog_id], references: [id], onDelete: Cascade)
+  user     User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  payments Payment[]
+
+  @@map("patronages")
+}
+
+model Walk {
+  id               String     @id @default(uuid()) @db.Uuid
+  dog_id           String     @db.Uuid
+  walker_id        String     @db.Uuid
+  scheduled_at     DateTime
+  duration_min     Int        @default(60)
+  status           WalkStatus @default(pending)
+  notes            String?    @db.Text
+  report_text      String?    @db.Text
+  report_photo_url String?
+  created_at       DateTime   @default(now())
+
+  // Relations
+  dog    Dog  @relation(fields: [dog_id], references: [id], onDelete: Cascade)
+  walker User @relation("WalkWalker", fields: [walker_id], references: [id], onDelete: Cascade)
+
+  @@map("walks")
+}
+
+model Payment {
+  id           String          @id @default(uuid()) @db.Uuid
+  user_id      String          @db.Uuid
+  goal_id      String?         @db.Uuid
+  patronage_id String?         @db.Uuid
+  amount       Int
+  currency     String          @default("RUB") @db.VarChar(3)
+  provider     PaymentProvider
+  provider_ref String          @unique
+  status       PaymentStatus
+  created_at   DateTime        @default(now())
+
+  // Relations
+  user      User       @relation(fields: [user_id], references: [id], onDelete: Restrict)
+  goal      Goal?      @relation(fields: [goal_id], references: [id], onDelete: SetNull)
+  patronage Patronage? @relation(fields: [patronage_id], references: [id], onDelete: SetNull)
+
+  @@map("payments")
+}
+
+model AnonDonation {
+  id           String             @id @default(uuid()) @db.Uuid
+  goal_id      String             @db.Uuid
+  email        String             @db.VarChar(255)
+  display_name String?            @db.VarChar(100)
+  amount       Int
+  currency     String             @default("RUB") @db.VarChar(3)
+  provider     PaymentProvider
+  provider_ref String             @unique
+  status       AnonDonationStatus
+  created_at   DateTime           @default(now())
+
+  // Relations
+  goal Goal @relation(fields: [goal_id], references: [id], onDelete: Restrict)
+
+  @@map("anon_donations")
+}
+
+model Report {
+  id         String     @id @default(uuid()) @db.Uuid
+  dog_id     String     @db.Uuid
+  curator_id String     @db.Uuid
+  type       ReportType
+  content    String     @db.Text
+  photo_urls String[]
+  created_at DateTime   @default(now())
+
+  // Relations
+  dog     Dog  @relation(fields: [dog_id], references: [id], onDelete: Cascade)
+  curator User @relation(fields: [curator_id], references: [id], onDelete: Cascade)
+
+  @@map("reports")
+}

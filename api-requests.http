@@ -1,0 +1,274 @@
+@baseUrl = http://localhost:3000/api/v1
+@authToken = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZTM4YjIzYi0xYjI2LTRkNWMtYjAxMy0zOWQzYWJmODM0YjUiLCJlbWFpbCI6InVzZXJAZXhhbXBsZS5jb20iLCJpYXQiOjE3NzQ4OTczNDEsImV4cCI6MTc3NDg5ODI0MX0.JXcqh0-Ryh8OpkPAcLVcZq9USoeqmrXLJp4OxCox11E
+@adminToken = <paste_admin_jwt_token_here>
+@curatorToken = <paste_curator_jwt_token_here>
+@dogId = c855b59b-8360-4f75-acea-6cf0edc7e6c6
+@goalId = <paste_goal_uuid_here>
+@walkId = <paste_walk_uuid_here>
+@patronageId = <paste_patronage_uuid_here>
+
+### =========================================================================
+### 1. 🛡️ AUTHENTICATION
+### =========================================================================
+
+### Register a new user
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "password123",
+  "name": "John Doe"
+}
+
+### Login
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+
+### =========================================================================
+### 2. 👥 CURATORS & PROFILES
+### =========================================================================
+
+### Create or Update Curator Profile
+POST {{baseUrl}}/curators/profile
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "bio": "Love dogs, rescue volunteer for 5 years.",
+  "shelter_name": "Happy Paws Shelter",
+  "city": "Moscow",
+  "contact_phone": "+79991234567"
+}
+
+### Get My Curator Profile
+GET {{baseUrl}}/curators/profile
+Authorization: Bearer {{authToken}}
+
+### Verify Curator (Admin only)
+POST {{baseUrl}}/curators/<curator_profile_uuid_here>/verify
+Authorization: Bearer {{adminToken}}
+
+### Get Public Curator Profile by Profile UUID
+GET {{baseUrl}}/curators/<curator_profile_uuid_here>
+
+### =========================================================================
+### 3. 🐕 DOGS CATALOG
+### =========================================================================
+
+### Create a Dog Profile (Curator/Admin only)
+POST {{baseUrl}}/dogs
+Authorization: Bearer {{curatorToken}}
+Content-Type: application/json
+
+{
+  "name": "Buddy",
+  "breed": "Golden Retriever",
+  "gender": "male",
+  "birth_date": "2020-01-01T00:00:00Z",
+  "size": "medium",
+  "weight": 25,
+  "health_status": "Healthy, vaccinated",
+  "special_needs": false,
+  "behavior_desc": "Very friendly, good with kids",
+  "story": "Found abandoned near a highway.",
+  "cover_photo_url": "https://minio.local/dogcare/buddy.jpg",
+  "city": "Moscow",
+  "status": "ready"
+}
+
+### Get Dogs (Public, with pagination and filters)
+GET {{baseUrl}}/dogs?page=1&limit=10&city=Moscow&gender=male
+
+### Get a single Dog Profile (Public)
+GET {{baseUrl}}/dogs/{{dogId}}
+
+### Update Dog Profile (Curator/Admin only)
+PUT {{baseUrl}}/dogs/{{dogId}}
+Authorization: Bearer {{curatorToken}}
+Content-Type: application/json
+
+{
+  "weight": 26,
+  "health_status": "Recently visited the vet, all fine."
+}
+
+### =========================================================================
+### 4. 🦮 PATRONAGE (Опека)
+### =========================================================================
+
+### Become a Patron (Exclusive)
+POST {{baseUrl}}/patronages
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "dog_id": "{{dogId}}",
+  "type": "exclusive"
+}
+
+### Get My Patronages
+GET {{baseUrl}}/patronages/me
+Authorization: Bearer {{authToken}}
+
+### Update Patronage Status
+PUT {{baseUrl}}/patronages/{{patronageId}}/status
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "status": "cancelled"
+}
+
+### Get Dog Patrons (Public)
+GET {{baseUrl}}/patronages/dog/{{dogId}}
+
+### =========================================================================
+### 5. 🚶‍♂️ WALKS (Прогулки)
+### =========================================================================
+
+### Request a Walk
+POST {{baseUrl}}/walks
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "dog_id": "{{dogId}}",
+  "scheduled_at": "2026-04-10T12:00:00Z",
+  "duration_min": 60,
+  "notes": "Will bring my own leash."
+}
+
+### Get My Scheduled Walks
+GET {{baseUrl}}/walks/me
+Authorization: Bearer {{authToken}}
+
+### Update Walk Status (Curator can confirm/cancel, Walker can start/complete)
+PUT {{baseUrl}}/walks/{{walkId}}/status
+Authorization: Bearer {{curatorToken}}
+Content-Type: application/json
+
+{
+  "status": "confirmed"
+}
+
+### Submit Walk Report (Walker only)
+POST {{baseUrl}}/walks/{{walkId}}/report
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "report_text": "Buddy had a great time playing in the park!",
+  "report_photo_url": "https://minio.local/dogcare/walk-buddy.jpg"
+}
+
+### Get Upcoming Public Walks for Dog
+GET {{baseUrl}}/walks/dog/{{dogId}}
+
+### =========================================================================
+### 6. 📝 REPORTS (Развернутые Отчеты Кураторов)
+### =========================================================================
+
+### Create a Report for Dog (Curator/Admin only)
+POST {{baseUrl}}/reports
+Authorization: Bearer {{curatorToken}}
+Content-Type: application/json
+
+{
+  "dog_id": "{{dogId}}",
+  "type": "medical",
+  "content": "Buddy successfully recovered from his sprain.",
+  "photo_urls": ["https://minio.local/dogcare/medical-doc.jpg"]
+}
+
+### Get Public Feed of Reports for a Dog
+GET {{baseUrl}}/reports/dog/{{dogId}}
+
+### =========================================================================
+### 7. 🎯 GOALS (Сборы пожертвований)
+### =========================================================================
+
+### Create a Funding Goal (Curator/Admin only)
+POST {{baseUrl}}/goals
+Authorization: Bearer {{curatorToken}}
+Content-Type: application/json
+
+{
+  "dog_id": "{{dogId}}",
+  "category": "treatment",
+  "title": "Surgery for Buddy's leg",
+  "description": "Buddy needs a minor corrective surgery.",
+  "amount_target": 15000,
+  "deadline": "2026-05-01T00:00:00Z"
+}
+
+### Get Active Goals for Dog (Public)
+GET {{baseUrl}}/goals/dog/{{dogId}}
+
+### Update Goal Status (Curator/Admin only)
+PUT {{baseUrl}}/goals/{{goalId}}/status
+Authorization: Bearer {{curatorToken}}
+Content-Type: application/json
+
+{
+  "status": "completed"
+}
+
+### =========================================================================
+### 8. 💸 PAYMENTS (Интеграция с YooKassa - Моки)
+### =========================================================================
+
+### Donate to a Goal (Authenticated)
+POST {{baseUrl}}/payments/donate
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "amount": 500,
+  "goal_id": "{{goalId}}"
+}
+
+### Donate Anonymously to a Goal (Public)
+POST {{baseUrl}}/payments/donate-anon
+Content-Type: application/json
+
+{
+  "amount": 1000,
+  "goal_id": "{{goalId}}",
+  "email": "good.soul@example.com",
+  "display_name": "Anonymous Hero"
+}
+
+### Subscribe to a Patronage via Payment
+POST {{baseUrl}}/payments/patronage
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "amount": 1000,
+  "dog_id": "{{dogId}}",
+  "type": "regular"
+}
+
+### YooKassa Webhook (Simulate a successful payment from external service)
+POST {{baseUrl}}/payments/webhook/yookassa
+Content-Type: application/json
+
+{
+  "event": "payment.succeeded",
+  "type": "notification",
+  "object": {
+    "id": "<replace_with_provider_ref_from_donate_response>",
+    "status": "succeeded",
+    "amount": { "value": "1000.00", "currency": "RUB" },
+    "metadata": {
+      "patronage_dog_id": "{{dogId}}",
+      "patronage_type": "regular"
+    }
+  }
+}
