@@ -100,8 +100,15 @@ export class AuthService {
 
   private sanitizeUser(user: any) {
     if (!user) return null;
-    const { password_hash, ...safeUser } = user;
-    return safeUser;
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      status: user.status,
+      created_at: user.created_at,
+      updated_at: user.updated_at,
+    };
   }
 
   async getMe(user: any) {
