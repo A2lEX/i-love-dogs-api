@@ -98,19 +98,13 @@ export class AuthService {
     await this.tokenService.removeRefreshToken(dto.refresh_token);
   }
 
-  async getMe(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        curator_profile: true,
-      },
-    });
-
-    if (!user) {
-      throw new UnauthorizedException('User not found');
-    }
-
+  private sanitizeUser(user: any) {
     const { password_hash, ...safeUser } = user;
     return safeUser;
+  }
+
+  async getMe(user: any) {
+    // user object is already provided by JwtStrategy/Guard
+    return this.sanitizeUser(user);
   }
 }

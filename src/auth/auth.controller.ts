@@ -61,6 +61,6 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current user profile' })
   async getMe(@CurrentUser() user: any) {
-    return this.authService.getMe(user.id);
+    return this.authService.getMe(user);
   }
 }
