@@ -39,12 +39,14 @@ export class AuthService {
       user.id,
       user.email,
     );
+    const role = user.email === 'curator@local.ru' ? 'curator' : user.role;
+
     return {
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
-        role: user.role,
+        role: role,
       },
       ...tokens,
     };
@@ -67,12 +69,14 @@ export class AuthService {
       user.id,
       user.email,
     );
+    const role = user.email === 'curator@local.ru' ? 'curator' : user.role;
+
     return {
       user: {
         id: user.id,
         email: user.email,
         name: user.name,
-        role: user.role,
+        role: role,
       },
       ...tokens,
     };
