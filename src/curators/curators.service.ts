@@ -33,7 +33,19 @@ export class CuratorsService {
       where: { user_id: userId },
       include: {
         dogs: {
-          select: { id: true, name: true, status: true, cover_photo_url: true },
+          select: { 
+            id: true, 
+            name: true, 
+            status: true, 
+            breed: true,
+            gender: true,
+            age_months: true,
+            city: true,
+            description: true,
+            cover_photo_url: true, 
+            photos: true,
+            created_at: true,
+          },
         },
       },
     });
