@@ -1,6 +1,6 @@
 import { Module, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
@@ -17,6 +17,8 @@ import { PatronagesModule } from './patronages/patronages.module';
 import { WalksModule } from './walks/walks.module';
 import { ReportsModule } from './reports/reports.module';
 import { PaymentsModule } from './payments/payments.module';
+import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
+import { RolesGuard } from './auth/guards/roles.guard';
 import config from './config';
 
 @Module({
@@ -56,6 +58,14 @@ import config from './config';
         whitelist: true,
         transform: true,
       }),
+    },
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,
     },
   ],
 })
