@@ -641,6 +641,11 @@ services:
     ports: ['9000:9000', '9001:9001']
     volumes: ['minio_data:/data']
 
+# Environment Variables for S3
+# S3_ENDPOINT=http://minio:9000        # Internal endpoint for backend
+# S3_PUBLIC_ENDPOINT=https://.../minio # Public endpoint for presigned URLs
+# S3_PUBLIC_URL=https://.../dogcare    # Public URL for direct access
+
 volumes:
   pg_data:
   redis_data:

@@ -681,7 +681,7 @@ Webhook от YooKassa. Верифицируется HMAC-SHA256 в `X-YooKassa-S
 
 ### 6.12. Media
 
-#### POST /media/upload-url [auth]
+#### POST /media/presigned-url [auth]
 
 Возвращает presigned URL для прямой загрузки в S3.
 
@@ -689,8 +689,7 @@ Webhook от YooKassa. Верифицируется HMAC-SHA256 в `X-YooKassa-S
 ```json
 {
   "filename": "dog_photo.jpg",
-  "content_type": "image/jpeg",
-  "purpose": "dog_cover" | "report_photo" | "walk_report"
+  "content_type": "image/jpeg"
 }
 ```
 
@@ -698,8 +697,8 @@ Webhook от YooKassa. Верифицируется HMAC-SHA256 в `X-YooKassa-S
 ```json
 {
   "upload_url": "https://s3.../presigned?...",
-  "public_url": "https://cdn.dogcare.ru/media/...",
-  "expires_at": "2026-04-21T11:00:00Z"
+  "file_url": "https://cdn.dogcare.ru/media/...",
+  "key": "uploads/uuid/dog_photo.jpg"
 }
 ```
 

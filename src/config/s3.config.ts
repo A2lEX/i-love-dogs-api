@@ -7,4 +7,5 @@ export default registerAs('s3', () => ({
   secretKey: process.env.S3_SECRET_KEY || 'minioadmin',
   region: process.env.S3_REGION || 'ru-central1',
   publicUrl: process.env.S3_PUBLIC_URL,
+  signingEndpoint: process.env.S3_PUBLIC_ENDPOINT,
 }));
