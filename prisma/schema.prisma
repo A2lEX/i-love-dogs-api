@@ -283,3 +283,13 @@ model Report {
 
   @@map("reports")
 }
+
+model City {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String   @db.VarChar(100)
+  country_code String   @db.VarChar(2)
+  created_at   DateTime @default(now())
+
+  @@unique([name, country_code])
+  @@map("cities")
+}
