@@ -4,13 +4,17 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { CitiesService } from '../cities/cities.service';
 import { CreateDogDto } from './dto/create-dog.dto';
 import { UpdateDogDto } from './dto/update-dog.dto';
 import { DogFilterDto } from './dto/dog-filter.dto';
 
 @Injectable()
 export class DogsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly citiesService: CitiesService,
+  ) {}
 
   private async getCuratorProfileId(userId: string): Promise<string> {
     const profile = await this.prisma.curatorProfile.findUnique({
@@ -83,6 +87,15 @@ export class DogsService {
     if (filter.gender) where.gender = filter.gender;
     if (filter.breed)
       where.breed = { contains: filter.breed, mode: 'insensitive' };
+
+    if (filter.country) {
+      const cityNames = await this.citiesService.getCityNamesByCountry(filter.country);
+      if (cityNames.length > 0) {
+        where.city = { in: cityNames };
+      } else {
+        return { items: [], total: 0, limit: filter.limit || 20, offset: filter.offset || 0 };
+      }
+    }
 
     const limit = filter.limit || 20;
     const offset = filter.offset || 0;

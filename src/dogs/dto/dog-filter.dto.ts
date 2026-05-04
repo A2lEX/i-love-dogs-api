@@ -18,6 +18,11 @@ export class DogFilterDto {
   @IsString()
   breed?: string;
 
+  @ApiPropertyOptional({ example: 'ME', description: 'ISO 3166-1 alpha-2 country code' })
+  @IsOptional()
+  @IsString()
+  country?: string;
+
   @ApiPropertyOptional({ example: 10 })
   @IsOptional()
   @Transform(({ value }) => parseInt(value, 10))
