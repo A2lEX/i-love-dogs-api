@@ -16,6 +16,28 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log('Seeding data...');
 
+  // Create Montenegro cities
+  const meCities = [
+    'Podgorica', 'Budva', 'Bar', 'Herceg Novi', 'Kotor',
+    'Tivat', 'Nikšić', 'Cetinje', 'Bijelo Polje', 'Ulcinj',
+  ];
+
+  for (const cityName of meCities) {
+    await prisma.city.upsert({
+      where: { name_country_code: { name: cityName, country_code: 'ME' } },
+      update: {},
+      create: { name: cityName, country_code: 'ME' },
+    });
+  }
+  console.log(`Created ${meCities.length} Montenegro cities`);
+
+  // Also add Moscow for existing data compatibility
+  await prisma.city.upsert({
+    where: { name_country_code: { name: 'Moscow', country_code: 'RU' } },
+    update: {},
+    create: { name: 'Moscow', country_code: 'RU' },
+  });
+
   // Create admin user
   const adminPassword = await bcrypt.hash('Admin123!', 10);
   const admin = await prisma.user.upsert({
@@ -45,7 +67,7 @@ async function main() {
       curator_profile: {
         create: {
           shelter_name: 'Happy Tails Shelter',
-          city: 'Moscow',
+          city: 'Podgorica',
           verify_status: 'verified',
         },
       },
@@ -70,7 +92,7 @@ async function main() {
         gender: 'male',
         description: 'A very good boy.',
         status: 'active',
-        city: 'Moscow',
+        city: 'Podgorica',
         curator_id: curatorProfile.id,
       },
     }),
@@ -82,7 +104,7 @@ async function main() {
         gender: 'female',
         description: 'Loves to play fetch.',
         status: 'active',
-        city: 'Moscow',
+        city: 'Podgorica',
         curator_id: curatorProfile.id,
       },
     }),
@@ -94,7 +116,7 @@ async function main() {
         gender: 'male',
         description: 'Looking for a loving home.',
         status: 'active',
-        city: 'Moscow',
+        city: 'Podgorica',
         curator_id: curatorProfile.id,
       },
     }),
