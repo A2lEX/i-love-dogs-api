@@ -66,7 +66,8 @@ export class MediaService {
     });
 
     const publicUrl = this.configService.get<string>('s3.publicUrl');
-    const fileUrl = `${(publicUrl || this.configService.get<string>('s3.endpoint')).replace(/\/$/, '')}/${key}`;
+    const baseUrl = publicUrl || this.configService.get<string>('s3.endpoint') || '';
+    const fileUrl = `${baseUrl.replace(/\/$/, '')}/${key}`;
 
     return {
       upload_url: uploadUrl,
