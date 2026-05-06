@@ -18,6 +18,7 @@ import { WalksModule } from './walks/walks.module';
 import { ReportsModule } from './reports/reports.module';
 import { PaymentsModule } from './payments/payments.module';
 import { CitiesModule } from './cities/cities.module';
+import { PaymentMethodsModule } from './payment-methods/payment-methods.module';
 import { JwtAuthGuard } from './auth/guards/jwt-auth.guard';
 import { RolesGuard } from './auth/guards/roles.guard';
 import config from './config';
@@ -42,6 +43,7 @@ import config from './config';
     ReportsModule,
     PaymentsModule,
     CitiesModule,
+    PaymentMethodsModule,
   ],
   controllers: [AppController],
   providers: [

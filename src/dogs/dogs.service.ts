@@ -133,6 +133,16 @@ export class DogsService {
             shelter_name: true,
             city: true,
             description: true,
+            payment_methods: {
+              where: { is_active: true },
+              orderBy: { sort_order: 'asc' },
+              select: {
+                id: true,
+                type: true,
+                label: true,
+                value: true,
+              },
+            },
           },
         },
         goals: {

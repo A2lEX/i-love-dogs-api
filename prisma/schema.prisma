@@ -138,8 +138,9 @@ model CuratorProfile {
   created_at     DateTime     @default(now())
 
   // Relations
-  user User  @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  dogs Dog[]
+  user            User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  dogs            Dog[]
+  payment_methods PaymentMethod[]
 
   @@map("curator_profiles")
 }
@@ -282,6 +283,23 @@ model Report {
   curator User @relation(fields: [curator_id], references: [id], onDelete: Cascade)
 
   @@map("reports")
+}
+
+model PaymentMethod {
+  id          String   @id @default(uuid()) @db.Uuid
+  curator_id  String   @db.Uuid
+  type        String   @db.VarChar(30)   // paypal, iban, revolut, wise, crypto
+  label       String   @db.VarChar(100)  // display name, e.g. "PayPal", "Bank EUR"
+  value       String   @db.VarChar(500)  // email, IBAN, link, wallet address
+  is_active   Boolean  @default(true)
+  sort_order  Int      @default(0)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  // Relations
+  curator CuratorProfile @relation(fields: [curator_id], references: [id], onDelete: Cascade)
+
+  @@map("payment_methods")
 }
 
 model City {
