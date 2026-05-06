@@ -23,14 +23,14 @@ export class PaymentMethodsController {
   @Post()
   @Roles('curator')
   @ApiOperation({ summary: 'Add a payment method (curator only)' })
-  async create(@Request() req, @Body() dto: CreatePaymentMethodDto) {
+  async create(@Request() req: any, @Body() dto: CreatePaymentMethodDto) {
     return this.service.create(req.user.id, dto);
   }
 
   @Get('my')
   @Roles('curator')
   @ApiOperation({ summary: 'Get my payment methods (curator only)' })
-  async findMy(@Request() req) {
+  async findMy(@Request() req: any) {
     return this.service.findByCurator(req.user.id);
   }
 
@@ -45,7 +45,7 @@ export class PaymentMethodsController {
   @Roles('curator')
   @ApiOperation({ summary: 'Update a payment method (curator only)' })
   async update(
-    @Request() req,
+    @Request() req: any,
     @Param('id') id: string,
     @Body() dto: UpdatePaymentMethodDto,
   ) {
@@ -55,7 +55,7 @@ export class PaymentMethodsController {
   @Delete(':id')
   @Roles('curator')
   @ApiOperation({ summary: 'Delete a payment method (curator only)' })
-  async remove(@Request() req, @Param('id') id: string) {
+  async remove(@Request() req: any, @Param('id') id: string) {
     return this.service.remove(req.user.id, id);
   }
 }
