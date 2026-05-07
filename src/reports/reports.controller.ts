@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Param, Logger } from '@nestjs/common';
 import { ReportsService } from './reports.service';
 import { CreateReportDto } from './dto/create-report.dto';
 import { ContactFormDto } from './dto/contact-form.dto';
+import { MailerService } from '../common/services/mailer.service';
 import {
   ApiBearerAuth,
   ApiOperation,
@@ -16,16 +17,23 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 @Controller('reports')
 export class ReportsController {
   private readonly logger = new Logger(ReportsController.name);
-  constructor(private readonly reportsService: ReportsService) {}
+  constructor(
+    private readonly reportsService: ReportsService,
+    private readonly mailerService: MailerService,
+  ) {}
 
   @Public()
   @Post('contact')
-  @ApiOperation({ summary: 'Send a contact form message (Email simulation)' })
+  @ApiOperation({ summary: 'Send a contact form message' })
   async contact(@Body() dto: ContactFormDto) {
     this.logger.log(`New contact message from ${dto.email} (${dto.name})`);
-    // Simulation of sending email to info@tailo.org
-    // In a real app, this would use a MailerService
-    return { success: true, message: 'Message logged and ready for delivery' };
+    try {
+      await this.mailerService.sendContactForm(dto);
+      return { success: true, message: 'Message delivered' };
+    } catch (error) {
+      this.logger.error(`Contact form delivery failed: ${error.message}`);
+      return { success: false, message: 'Delivery failed' };
+    }
   }
 
   @ApiBearerAuth()
