@@ -11,7 +11,18 @@ async function bootstrap(): Promise<INestApplication> {
     const app = await NestFactory.create(AppModule);
 
     app.setGlobalPrefix('api/v1');
-    app.enableCors();
+    app.enableCors({
+      origin: [
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'https://tailo.org',
+        /\.tailo\.org$/,
+        /^https:\/\/i-love-dogs-frontend-.*\.vercel\.app$/,
+      ],
+      credentials: true,
+      methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    });
 
     const swaggerConfig = new DocumentBuilder()
       .setTitle('DogCare API')
