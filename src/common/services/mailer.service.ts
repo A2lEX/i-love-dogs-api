@@ -41,7 +41,7 @@ export class MailerService {
         to,
         subject,
         html,
-        reply_to: data.email,
+        replyTo: data.email,
       });
 
       if (result.error) {
