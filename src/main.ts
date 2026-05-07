@@ -16,12 +16,14 @@ async function bootstrap(): Promise<INestApplication> {
         'http://localhost:3000',
         'http://localhost:3001',
         'https://tailo.org',
-        /\.tailo\.org$/,
+        'https://www.tailo.org',
+        /^https:\/\/.*\.tailo\.org$/,
         /^https:\/\/i-love-dogs-frontend-.*\.vercel\.app$/,
       ],
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'X-Region', 'X-Country', 'X-Currency'],
+      exposedHeaders: ['Set-Cookie'],
     });
 
     const swaggerConfig = new DocumentBuilder()
