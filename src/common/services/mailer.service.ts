@@ -8,16 +8,35 @@ export class MailerService {
   private transporter: nodemailer.Transporter;
 
   constructor(private readonly configService: ConfigService) {
-    // For local development or production with sendmail installed
-    this.transporter = nodemailer.createTransport({
-      sendmail: true,
-      newline: 'unix',
-      path: '/usr/sbin/sendmail',
-    });
+    const smtpHost = this.configService.get<string>('SMTP_HOST');
+    const smtpPort = this.configService.get<number>('SMTP_PORT', 587);
+    const smtpUser = this.configService.get<string>('SMTP_USER');
+    const smtpPass = this.configService.get<string>('SMTP_PASS');
+
+    if (smtpHost && smtpUser && smtpPass) {
+      this.logger.log(`Configuring SMTP transport via ${smtpHost}:${smtpPort}`);
+      this.transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: smtpPort,
+        secure: smtpPort === 465, // true for 465, false for other ports
+        auth: {
+          user: smtpUser,
+          pass: smtpPass,
+        },
+      });
+    } else {
+      this.logger.warn('SMTP credentials not found, falling back to sendmail');
+      this.transporter = nodemailer.createTransport({
+        sendmail: true,
+        newline: 'unix',
+        path: '/usr/sbin/sendmail',
+      });
+    }
   }
 
   async sendContactForm(data: { name: string; email: string; message: string }) {
     const to = 'info@tailo.org';
+    const fromEmail = this.configService.get('SMTP_USER') || this.configService.get('SENDGRID_FROM_EMAIL', 'noreply@tailo.org');
     const subject = `New Contact Form Message from ${data.name}`;
     
     const html = `
@@ -30,13 +49,13 @@ export class MailerService {
 
     try {
       await this.transporter.sendMail({
-        from: `"Tailo Contact Form" <${this.configService.get('SENDGRID_FROM_EMAIL', 'noreply@tailo.org')}>`,
+        from: `"Tailo Contact Form" <${fromEmail}>`,
         to,
         subject,
         html,
         replyTo: data.email,
       });
-      this.logger.log(`Email sent to ${to} from ${data.email}`);
+      this.logger.log(`Email sent to ${to} from ${data.email} via SMTP`);
       return true;
     } catch (error) {
       this.logger.error(`Failed to send email to ${to}`, error.stack);
