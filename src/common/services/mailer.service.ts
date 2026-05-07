@@ -1,42 +1,30 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 @Injectable()
 export class MailerService {
   private readonly logger = new Logger(MailerService.name);
-  private transporter: nodemailer.Transporter;
+  private resend: Resend;
 
   constructor(private readonly configService: ConfigService) {
-    const smtpHost = this.configService.get<string>('SMTP_HOST');
-    const smtpPort = this.configService.get<number>('SMTP_PORT', 587);
-    const smtpUser = this.configService.get<string>('SMTP_USER');
-    const smtpPass = this.configService.get<string>('SMTP_PASS');
-
-    if (smtpHost && smtpUser && smtpPass) {
-      this.logger.log(`Configuring SMTP transport via ${smtpHost}:${smtpPort}`);
-      this.transporter = nodemailer.createTransport({
-        host: smtpHost,
-        port: smtpPort,
-        secure: smtpPort === 465, // true for 465, false for other ports
-        auth: {
-          user: smtpUser,
-          pass: smtpPass,
-        },
-      });
+    const apiKey = this.configService.get<string>('RESEND_API_KEY');
+    if (apiKey) {
+      this.resend = new Resend(apiKey);
+      this.logger.log('MailerService initialized with Resend');
     } else {
-      this.logger.warn('SMTP credentials not found, falling back to sendmail');
-      this.transporter = nodemailer.createTransport({
-        sendmail: true,
-        newline: 'unix',
-        path: '/usr/sbin/sendmail',
-      });
+      this.logger.warn('RESEND_API_KEY not found. Emails will not be sent.');
     }
   }
 
   async sendContactForm(data: { name: string; email: string; message: string }) {
+    if (!this.resend) {
+      this.logger.error('Resend is not configured. Skipping email.');
+      return false;
+    }
+
     const to = 'info@tailo.org';
-    const fromEmail = this.configService.get('SMTP_USER') || this.configService.get('SENDGRID_FROM_EMAIL', 'noreply@tailo.org');
+    const from = 'Tailo <onboarding@resend.dev>'; // Resend requires verified domain or onboarding@resend.dev
     const subject = `New Contact Form Message from ${data.name}`;
     
     const html = `
@@ -48,17 +36,23 @@ export class MailerService {
     `;
 
     try {
-      await this.transporter.sendMail({
-        from: `"Tailo Contact Form" <${fromEmail}>`,
+      const result = await this.resend.emails.send({
+        from,
         to,
         subject,
         html,
-        replyTo: data.email,
+        reply_to: data.email,
       });
-      this.logger.log(`Email sent to ${to} from ${data.email} via SMTP`);
+
+      if (result.error) {
+        this.logger.error(`Resend error: ${result.error.message}`);
+        throw new Error(result.error.message);
+      }
+
+      this.logger.log(`Email sent successfully via Resend. ID: ${result.data?.id}`);
       return true;
     } catch (error) {
-      this.logger.error(`Failed to send email to ${to}`, error.stack);
+      this.logger.error(`Failed to send email to ${to} via Resend`, error.stack);
       throw error;
     }
   }
