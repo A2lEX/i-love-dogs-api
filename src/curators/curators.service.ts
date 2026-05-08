@@ -33,7 +33,6 @@ export class CuratorsService {
       where: { user_id: userId },
       include: {
         dogs: {
-          where: { status: 'active' },
           select: { 
             id: true, 
             name: true, 
