@@ -13,7 +13,7 @@ services:
       - .env.prod
     environment:
       - DATABASE_URL=postgresql://${DB_USER:-postgres}:${DB_PASS:-postgres}@postgres:5432/${DB_NAME:-dogcare}?schema=public
-      - REDIS_URL=redis://redis:6379
+      - REDIS_URL=redis://:${REDIS_PASS}@redis:6379
       - S3_ENDPOINT=http://minio:9000
       - NODE_ENV=production
     depends_on:
