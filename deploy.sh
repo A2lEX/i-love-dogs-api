@@ -28,7 +28,7 @@ ssh $SERVER << EOF
   docker compose -f docker-compose.prod.yml run --rm api npx prisma db seed
 
   echo "🔄 Перезапускаем рабочие контейнеры..."
-  docker compose -f docker-compose.prod.yml up -d
+  docker compose -f docker-compose.prod.yml up -d --force-recreate
 
   echo "✅ Деплой успешно завершен!"
 EOF
