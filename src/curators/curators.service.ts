@@ -54,7 +54,15 @@ export class CuratorsService {
       throw new NotFoundException('Curator profile not found for this user');
     }
 
-    return profile;
+    return {
+      ...profile,
+      dogs: profile.dogs.map(dog => ({
+        ...dog,
+        city: dog.city?.name || 'Unknown',
+        city_lat: dog.city?.lat,
+        city_lng: dog.city?.lng,
+      }))
+    };
   }
 
   async getProfileById(curatorId: string) {
@@ -79,7 +87,15 @@ export class CuratorsService {
       throw new NotFoundException('Curator not found');
     }
 
-    return profile;
+    return {
+      ...profile,
+      dogs: profile.dogs.map(dog => ({
+        ...dog,
+        city: dog.city?.name || 'Unknown',
+        city_lat: dog.city?.lat,
+        city_lng: dog.city?.lng,
+      }))
+    };
   }
 
   async verifyCurator(

@@ -82,15 +82,30 @@ export class PatronagesService {
   }
 
   async getMyPatronages(userId: string) {
-    return this.prisma.patronage.findMany({
+    const patronages = await this.prisma.patronage.findMany({
       where: { user_id: userId },
       orderBy: { created_at: 'desc' },
       include: {
         dog: {
-          select: { id: true, name: true, cover_photo_url: true, city: true },
+          select: {
+            id: true,
+            name: true,
+            cover_photo_url: true,
+            city: true,
+          },
         },
       },
     });
+
+    return patronages.map((p) => ({
+      ...p,
+      dog: {
+        ...p.dog,
+        city: p.dog.city?.name || 'Unknown',
+        city_lat: p.dog.city?.lat,
+        city_lng: p.dog.city?.lng,
+      },
+    }));
   }
 
   async getDogPatrons(dogId: string) {
