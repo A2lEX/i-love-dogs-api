@@ -62,7 +62,6 @@ export class MediaService {
     // Generate signed URL using the public signing client
     // This ensures the Host header in the signature matches the public endpoint
     this.logger.debug(`Generating presigned URL for key: ${key}`);
-    this.logger.debug(`Using signing client with endpoint config: ${await this.signingS3Client.config.endpoint()}`);
     
     const uploadUrl = await getSignedUrl(this.signingS3Client, command, {
       expiresIn: 300,
