@@ -103,15 +103,15 @@ enum ReportType {
 // Models
 
 model User {
-  id            String   @id @default(uuid()) @db.Uuid
-  name          String   @db.VarChar(100)
-  email         String   @unique @db.VarChar(255)
-  phone         String?  @db.VarChar(20)
+  id            String     @id @default(uuid()) @db.Uuid
+  name          String     @db.VarChar(100)
+  email         String     @unique @db.VarChar(255)
+  phone         String?    @db.VarChar(20)
   password_hash String
   role          UserRole
   status        UserStatus
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @updatedAt
 
   // Relations
   curator_profile CuratorProfile?
@@ -154,7 +154,7 @@ model Dog {
   gender          DogGender
   description     String    @db.Text
   status          DogStatus
-  city            String    @db.VarChar(100)
+  city_id         String?   @db.Uuid
   cover_photo_url String?
   photos          String[]  @default([])
   created_at      DateTime  @default(now())
@@ -162,6 +162,7 @@ model Dog {
 
   // Relations
   curator    CuratorProfile @relation(fields: [curator_id], references: [id], onDelete: Restrict)
+  city       City?          @relation(fields: [city_id], references: [id], onDelete: SetNull)
   goals      Goal[]
   patronages Patronage[]
   walks      Walk[]
@@ -286,15 +287,15 @@ model Report {
 }
 
 model PaymentMethod {
-  id          String   @id @default(uuid()) @db.Uuid
-  curator_id  String   @db.Uuid
-  type        String   @db.VarChar(30)   // paypal, iban, revolut, wise, crypto
-  label       String   @db.VarChar(100)  // display name, e.g. "PayPal", "Bank EUR"
-  value       String   @db.VarChar(500)  // email, IBAN, link, wallet address
-  is_active   Boolean  @default(true)
-  sort_order  Int      @default(0)
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+  id         String   @id @default(uuid()) @db.Uuid
+  curator_id String   @db.Uuid
+  type       String   @db.VarChar(30) // paypal, iban, revolut, wise, crypto
+  label      String   @db.VarChar(100) // display name, e.g. "PayPal", "Bank EUR"
+  value      String   @db.VarChar(500) // email, IBAN, link, wallet address
+  is_active  Boolean  @default(true)
+  sort_order Int      @default(0)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   // Relations
   curator CuratorProfile @relation(fields: [curator_id], references: [id], onDelete: Cascade)
@@ -302,12 +303,32 @@ model PaymentMethod {
   @@map("payment_methods")
 }
 
+model Country {
+  id           String   @id @default(uuid()) @db.Uuid
+  code         String   @unique @db.VarChar(2) // ISO 3166-1 alpha-2
+  name         String   @db.VarChar(100)
+  currency     String   @db.VarChar(3)
+  created_at   DateTime @default(now())
+
+  // Relations
+  cities       City[]
+
+  @@map("countries")
+}
+
 model City {
   id           String   @id @default(uuid()) @db.Uuid
   name         String   @db.VarChar(100)
-  country_code String   @db.VarChar(2)
+  state        String?  @db.VarChar(100)
+  lat          Float
+  lng          Float
+  country_id   String   @db.Uuid
   created_at   DateTime @default(now())
 
-  @@unique([name, country_code])
+  // Relations
+  country      Country  @relation(fields: [country_id], references: [id], onDelete: Restrict)
+  dogs         Dog[]
+
+  @@unique([name, state, country_id])
   @@map("cities")
 }

@@ -29,12 +29,12 @@ export class DogFilterDto {
   @IsInt()
   @Min(1)
   @Max(100)
-  limit?: number = 20;
+  limit?: number;
 
   @ApiPropertyOptional({ example: 0 })
   @IsOptional()
   @Transform(({ value }) => parseInt(value, 10))
   @IsInt()
   @Min(0)
-  offset?: number = 0;
+  offset?: number;
 }

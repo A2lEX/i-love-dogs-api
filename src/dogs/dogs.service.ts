@@ -27,8 +27,36 @@ export class DogsService {
     return profile.id;
   }
 
+  private async getOrCreateCityId(cityName: string, lat?: number, lng?: number): Promise<string | null> {
+    if (!cityName) return null;
+    
+    // First, try to find an exact match
+    let city = await this.prisma.city.findFirst({
+      where: { name: cityName },
+    });
+
+    // If not found, and we have lat/lng, create it
+    if (!city && lat !== undefined && lng !== undefined) {
+      // Need a default country. For now, assume ME if creating new
+      const meCountry = await this.prisma.country.findUnique({ where: { code: 'ME' } });
+      if (meCountry) {
+        city = await this.prisma.city.create({
+          data: {
+            name: cityName,
+            lat,
+            lng,
+            country_id: meCountry.id,
+          },
+        });
+      }
+    }
+    
+    return city?.id || null;
+  }
+
   async create(userId: string, data: CreateDogDto) {
     const curatorId = await this.getCuratorProfileId(userId);
+    const cityId = await this.getOrCreateCityId(data.city, data.city_lat, data.city_lng);
 
     return this.prisma.dog.create({
       data: {
@@ -38,7 +66,7 @@ export class DogsService {
         age_months: data.age_months || null,
         gender: data.gender,
         description: data.description,
-        city: data.city,
+        city_id: cityId,
         cover_photo_url: data.cover_photo_url || null,
         photos: data.photos || [],
         status: 'active',
@@ -61,6 +89,12 @@ export class DogsService {
       throw new ForbiddenException('You can only edit your own dogs');
     }
 
+    let cityId: string | undefined;
+    if (data.city) {
+      const resolvedCityId = await this.getOrCreateCityId(data.city, data.city_lat, data.city_lng);
+      if (resolvedCityId) cityId = resolvedCityId;
+    }
+
     return this.prisma.dog.update({
       where: { id: dogId },
       data: {
@@ -69,7 +103,7 @@ export class DogsService {
         age_months: data.age_months,
         gender: data.gender,
         description: data.description,
-        city: data.city,
+        ...(cityId ? { city_id: cityId } : {}),
         cover_photo_url: data.cover_photo_url,
         photos: data.photos,
         status: data.status,
@@ -82,18 +116,18 @@ export class DogsService {
       status: 'active',
     };
 
-    if (filter.city)
-      where.city = { contains: filter.city, mode: 'insensitive' };
     if (filter.gender) where.gender = filter.gender;
     if (filter.breed)
       where.breed = { contains: filter.breed, mode: 'insensitive' };
 
-    if (filter.country) {
-      const cityNames = await this.citiesService.getCityNamesByCountry(filter.country);
-      if (cityNames.length > 0) {
-        where.city = { in: cityNames };
-      } else {
-        return { items: [], total: 0, limit: filter.limit || 20, offset: filter.offset || 0 };
+    // City relation filtering
+    if (filter.city || filter.country) {
+      where.city = {};
+      if (filter.city) {
+        where.city.name = { contains: filter.city, mode: 'insensitive' };
+      }
+      if (filter.country) {
+        where.city.country = { code: filter.country.toUpperCase() };
       }
     }
 
@@ -110,13 +144,22 @@ export class DogsService {
           curator: {
             select: { shelter_name: true, city: true },
           },
+          city: true,
         },
       }),
       this.prisma.dog.count({ where }),
     ]);
 
+    // Format output to match existing frontend expectations
+    const formattedItems = items.map(item => ({
+      ...item,
+      city: item.city?.name || 'Unknown',
+      city_lat: item.city?.lat,
+      city_lng: item.city?.lng,
+    }));
+
     return {
-      items,
+      items: formattedItems,
       total,
       limit,
       offset,
@@ -145,6 +188,7 @@ export class DogsService {
             },
           },
         },
+        city: true,
         goals: {
           where: { status: 'active' },
           orderBy: { created_at: 'desc' },
@@ -156,6 +200,11 @@ export class DogsService {
       throw new NotFoundException('Dog not found');
     }
 
-    return dog;
+    return {
+      ...dog,
+      city: dog.city?.name || 'Unknown',
+      city_lat: dog.city?.lat,
+      city_lng: dog.city?.lng,
+    };
   }
 }

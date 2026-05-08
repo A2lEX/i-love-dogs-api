@@ -43,6 +43,14 @@ export class CreateDogDto {
   @MaxLength(100)
   city: string;
 
+  @ApiPropertyOptional({ example: 42.2863 })
+  @IsOptional()
+  city_lat?: number;
+
+  @ApiPropertyOptional({ example: 18.8400 })
+  @IsOptional()
+  city_lng?: number;
+
   @ApiPropertyOptional({ example: 'https://minio.local/dogcare/rex.jpg' })
   @IsOptional()
   @IsUrl()

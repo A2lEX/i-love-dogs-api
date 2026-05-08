@@ -16,27 +16,62 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log('Seeding data...');
 
+  // Create countries
+  const meCountry = await prisma.country.upsert({
+    where: { code: 'ME' },
+    update: {},
+    create: { code: 'ME', name: 'Montenegro', currency: 'EUR' },
+  });
+
+  const ruCountry = await prisma.country.upsert({
+    where: { code: 'RU' },
+    update: {},
+    create: { code: 'RU', name: 'Russia', currency: 'RUB' },
+  });
+
+  const rsCountry = await prisma.country.upsert({
+    where: { code: 'RS' },
+    update: {},
+    create: { code: 'RS', name: 'Serbia', currency: 'RSD' },
+  });
+  console.log('Created countries');
+
   // Create Montenegro cities
   const meCities = [
-    'Podgorica', 'Budva', 'Bar', 'Herceg Novi', 'Kotor',
-    'Tivat', 'Nikšić', 'Cetinje', 'Bijelo Polje', 'Ulcinj',
+    { name: 'Podgorica', lat: 42.4304, lng: 19.2594 },
+    { name: 'Budva', lat: 42.2863, lng: 18.8400 },
+    { name: 'Bar', lat: 42.0932, lng: 19.0984 },
+    { name: 'Herceg Novi', lat: 42.4531, lng: 18.5375 },
+    { name: 'Kotor', lat: 42.4246, lng: 18.7712 },
+    { name: 'Tivat', lat: 42.4364, lng: 18.6961 },
+    { name: 'Nikšić', lat: 42.7731, lng: 18.9445 },
+    { name: 'Cetinje', lat: 42.3933, lng: 18.9116 },
+    { name: 'Bijelo Polje', lat: 43.0383, lng: 19.7476 },
+    { name: 'Ulcinj', lat: 41.9311, lng: 19.2155 },
   ];
 
-  for (const cityName of meCities) {
-    await prisma.city.upsert({
-      where: { name_country_code: { name: cityName, country_code: 'ME' } },
-      update: {},
-      create: { name: cityName, country_code: 'ME' },
+  // Proper way to seed cities to avoid unique constraint issues with nullable state
+  for (const city of meCities) {
+    let existing = await prisma.city.findFirst({
+      where: { name: city.name, country_id: meCountry.id },
     });
+    if (!existing) {
+      await prisma.city.create({
+        data: { name: city.name, lat: city.lat, lng: city.lng, country_id: meCountry.id },
+      });
+    }
   }
   console.log(`Created ${meCities.length} Montenegro cities`);
 
   // Also add Moscow for existing data compatibility
-  await prisma.city.upsert({
-    where: { name_country_code: { name: 'Moscow', country_code: 'RU' } },
-    update: {},
-    create: { name: 'Moscow', country_code: 'RU' },
+  let moscow = await prisma.city.findFirst({
+    where: { name: 'Moscow', country_id: ruCountry.id },
   });
+  if (!moscow) {
+    moscow = await prisma.city.create({
+      data: { name: 'Moscow', lat: 55.7558, lng: 37.6173, country_id: ruCountry.id },
+    });
+  }
 
   // Create admin user
   const adminPassword = await bcrypt.hash('Admin123!', 10);
@@ -82,6 +117,10 @@ async function main() {
 
   if (!curatorProfile) throw new Error('Failed to create curator profile');
 
+  const podgorica = await prisma.city.findFirst({
+    where: { name: 'Podgorica', country_id: meCountry.id },
+  });
+
   // Create 3 dogs
   const dogs = await Promise.all([
     prisma.dog.create({
@@ -92,7 +131,7 @@ async function main() {
         gender: 'male',
         description: 'A very good boy.',
         status: 'active',
-        city: 'Podgorica',
+        city_id: podgorica?.id,
         curator_id: curatorProfile.id,
       },
     }),
@@ -104,7 +143,7 @@ async function main() {
         gender: 'female',
         description: 'Loves to play fetch.',
         status: 'active',
-        city: 'Podgorica',
+        city_id: podgorica?.id,
         curator_id: curatorProfile.id,
       },
     }),
@@ -116,7 +155,7 @@ async function main() {
         gender: 'male',
         description: 'Looking for a loving home.',
         status: 'active',
-        city: 'Podgorica',
+        city_id: podgorica?.id,
         curator_id: curatorProfile.id,
       },
     }),
